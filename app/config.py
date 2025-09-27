@@ -2,18 +2,17 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql://user:password@localhost/callcenter_db"
-    REDIS_URL: str = "redis://localhost:6379/0"
-    
+    SUPABASE_URL: str
+    SUPABASE_KEY: str 
+    SUPABASE_ANON_KEY: str 
+
     OPENAI_API_KEY: str
     
-    AWS_ACCESS_KEY_ID: str
-    AWS_SECRET_ACCESS_KEY: str
-    AWS_S3_BUCKET: str
-    AWS_REGION: str = "us-east-1"
-    
-    MAX_AUDIO_FILE_SIZE: int = 100 * 1024 * 1024 
-    SUPPORTED_AUDIO_FORMATS: list = [".wav", ".mp3", ".m4a", ".flac"]
+
+    MAX_AUDIO_FILE_SIZE: int = 100 * 1024 * 1024
+    SUPPORTED_AUDIO_FORMATS: list = [".wav", ".mp3", ".m4a", ".flac", ".ogg"]
+
+    STORAGE_BUCKET_NAME: str = "call-recordings"
     
     class Config:
         env_file = ".env"
