@@ -1,27 +1,23 @@
 
-import requests
+import openai
 from app.config import config
 from app.models.schemas import CallAnalysis
 
+openai.api_key = config.OPENAI_API_KEY
+
 def analyze_transcript(transcript: str) -> CallAnalysis:
-    url = "https://api.x.ai/v1/chat/completions"  
-    headers = {
-        "Authorization": f"Bearer {config.GROK_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": "grok-4",
-        "messages": [
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini", 
+        messages=[
             {"role": "system", "content": "You are an AI analyzer for call center performance. Analyze the Russian transcript for: 1) Customer emotions (dict with scores 0-1 for positive, neutral, angry, frustrated). 2) Key phrases indicating issue resolution (list). 3) Whether the issue was solved (bool). Output as JSON."},
             {"role": "user", "content": transcript}
-        ]
-    }
-    response = requests.post(url, headers=headers, json=payload)
-    response.raise_for_status()
-    analysis_json = response.json()["choices"][0]["message"]["content"]
-
+        ],
+        response_format={"type": "json_object"} 
+    )
+    
+    # Parse JSON
     import json
-    parsed = json.loads(analysis_json)
+    parsed = json.loads(response.choices[0].message.content)
     return CallAnalysis(
         transcript=transcript,
         emotions=parsed["emotions"],
