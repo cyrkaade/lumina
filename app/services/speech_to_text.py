@@ -3,32 +3,32 @@ from pydub import AudioSegment
 import io
 import tempfile
 import os
+from app.config import settings
 
 class SpeechToTextService:
     def __init__(self):
         openai.api_key = settings.OPENAI_API_KEY
-
-    def transcribe_audio(self, audio_file_path: str) -> dict:
-        """
-        whisper api
-        returns: {
-            'transcript': str,
-            'language': str,
-            'duration': float
-        }
-        """
+    
+    async def transcribe_audio(self, audio_content: bytes, file_extension: str) -> dict:
         try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
+                temp_file.write(audio_content)
+                temp_file_path = temp_file.name
 
-            audio_path = self._prepare_audio_file(audio_file_path)
-            
-            with open(audio_path, 'rb') as audio_file:
+            prepared_audio_path = await self._prepare_audio_file(temp_file_path)
+
+            with open(prepared_audio_path, 'rb') as audio_file:
                 transcript = openai.Audio.transcribe(
                     model="whisper-1",
                     file=audio_file,
-                    language="ru",  
+                    language="ru",
                     response_format="verbose_json",
                     temperature=0
                 )
+
+            os.unlink(temp_file_path)
+            if prepared_audio_path != temp_file_path:
+                os.unlink(prepared_audio_path)
             
             return {
                 'transcript': transcript['text'],
@@ -40,8 +40,8 @@ class SpeechToTextService:
         except Exception as e:
             raise Exception(f"Speech-to-text conversion failed: {str(e)}")
     
-    def _prepare_audio_file(self, file_path: str) -> str:
-
+    async def _prepare_audio_file(self, file_path: str) -> str:
+        """Convert audio file to format supported by Whisper API"""
         file_extension = os.path.splitext(file_path)[1].lower()
         
         if file_extension in ['.wav', '.mp3', '.m4a', '.flac']:
