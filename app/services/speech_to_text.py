@@ -11,7 +11,7 @@ def transcribe_audio(audio_content: bytes) -> str:
         temp_file.write(audio_content)
         temp_file_path = temp_file.name
 
-    try:
+    try:    
         with open(temp_file_path, "rb") as audio_file:
             response = openai.Audio.transcribe(
                 model="whisper-1",
